@@ -17,7 +17,7 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: petstore-otel-3
+  name: jpetstore-otel-test
   annotations:
     run.googleapis.com/ingress: all
     run.googleapis.com/ingress-status: all
@@ -38,8 +38,8 @@ spec:
       timeoutSeconds: 300
       # serviceAccountName: opentelemetry-demo@das-ct-lab.iam.gserviceaccount.com
       containers:
-        - name: petstore
-          image: asia-east1-docker.pkg.dev/otel-431601/jpetstore/jpetstore
+        - name: jpetstore-app
+          image: asia-east1-docker.pkg.dev/das-ct-lab/test-otel/jpetstore
           ports:
             - containerPort: 8080
           env:
@@ -52,7 +52,7 @@ spec:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://localhost:4317"
             - name: OTEL_SERVICE_NAME
-              value: "pet-otel-demo"
+              value: "jpetstore-demo"
             - name: OTEL_TRACES_SAMPLER
               value: "always_on"
             - name: OTEL_METRICS_EXPORTER
@@ -68,7 +68,7 @@ spec:
               path: /actuator/health/readiness
               port: 8080
             initialDelaySeconds: 10
-            periodSeconds: 10
+            periodSeconds: 20
             failureThreshold: 10
             timeoutSeconds: 1
           livenessProbe:
@@ -80,7 +80,7 @@ spec:
             failureThreshold: 10
             timeoutSeconds: 1
         - name: otel-collector
-          image: asia-east1-docker.pkg.dev/otel-431601/jpetstore/collector
+          image: asia-east1-docker.pkg.dev/das-ct-lab/test-otel/collector
           resources:
             limits:
               cpu: 500m

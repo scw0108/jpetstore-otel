@@ -118,7 +118,7 @@ interface CategoryMapper {
 
 ## Default active accounts (ID/PASSWORD)
 
-* j2ee/j2ee
+* j2ee/tBp5DvBR
 * ACID/ACID
 
 ## Data Store
