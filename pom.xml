@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2016-2022 the original author or authors.
+       Copyright 2016-2024 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -59,6 +59,8 @@
 	</parent>
 
 	<properties>
+		<jib-maven-plugin.version>3.3.2</jib-maven-plugin.version>
+        <opentelemetry.version>1.28.0</opentelemetry.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -160,6 +162,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<executable>true</executable>
+					<finalName>petclinic</finalName>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -277,6 +280,68 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+                <execution>
+                    <id>copy-agent</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>copy</goal>
+                    </goals>
+                    <configuration>
+                        <artifactItems>
+                            <artifactItem>
+                                <groupId>io.opentelemetry.javaagent</groupId>
+                                <artifactId>opentelemetry-javaagent</artifactId>
+                                <version>${opentelemetry.version}</version>
+                                <outputDirectory>${project.build.directory}/agent</outputDirectory>
+                                <destFileName>opentelemetry-javaagent.jar</destFileName>
+                            </artifactItem>
+                        </artifactItems>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
+        <plugin>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-maven-plugin</artifactId>
+            <version>${jib-maven-plugin.version}</version>
+            <configuration>
+                <from>
+                    <image>gcr.io/distroless/java17-debian12</image>
+                    <platforms>
+                        <platform>
+                            <architecture>amd64</architecture>
+                            <os>linux</os>
+                        </platform>
+                    </platforms>
+                </from>
+                <container>
+                    <jvmFlags>
+                        <jvmFlag>-javaagent:/otelagent/opentelemetry-javaagent.jar</jvmFlag>
+                    </jvmFlags>
+                </container>
+                <extraDirectories>
+                    <paths>
+                        <path>
+                            <from>${project.build.directory}/agent</from>
+                            <into>/otelagent</into>
+                        </path>
+                    </paths>
+                </extraDirectories>
+            </configuration>
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>dockerBuild</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
 		</plugins>
 	</build>
 
