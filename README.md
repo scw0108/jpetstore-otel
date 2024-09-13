@@ -1,20 +1,10 @@
-# mybatis-spring-boot-jpetstore
+# jpetstore-otel
 
-[![Java CI](https://github.com/kazuki43zoo/mybatis-spring-boot-jpetstore/actions/workflows/ci.yaml/badge.svg)](https://github.com/kazuki43zoo/mybatis-spring-boot-jpetstore/actions/workflows/ci.yaml)
-[![Dependency Check](https://github.com/kazuki43zoo/mybatis-spring-boot-jpetstore/actions/workflows/dependency-check.yaml/badge.svg)](https://github.com/kazuki43zoo/mybatis-spring-boot-jpetstore/actions/workflows/dependency-check.yaml)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kazuki43zoo_mybatis-spring-boot-jpetstore&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=kazuki43zoo_mybatis-spring-boot-jpetstore)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kazuki43zoo_mybatis-spring-boot-jpetstore&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kazuki43zoo_mybatis-spring-boot-jpetstore)
+This application is a web application modified by [JPetStore](https://github.com/kazuki43zoo/mybatis-spring-boot-jpetstore) Spring Boot version to demenstorate [OpenTelemetry](https://opentelemetry.io/docs/). 
+The application is deployed on GCP Cloud Run.
+There is a OpenTelemetry Collector that collects telemetry data and sends to [Splunk Observability Cloud](https://www.splunk.com/en_us/products/observability-cloud.html) for monitoring.
 
-This sample is a web application built on MyBatis, Spring Boot(Spring MVC, Spring Security) and Thymeleaf.
-This is another implementation of MyBatis JPetStore sample application (https://github.com/mybatis/jpetstore-6).
-
-Original application is available for downloading in the downloads section of MyBatis project site.
-In this section, we will walk through this sample to understand how is it built and learn how to run it.
-
-> **Note**
->
-> This sample application is under development.
-> If you found an issue, please report from [here](https://github.com/kazuki43zoo/mybatis-spring-boot-jpetstore/issues/new).
+We will walk through this sample to understand how is it built and learn how to run it.
 
 ## Requirements
 
@@ -33,143 +23,179 @@ In this section, we will walk through this sample to understand how is it built 
 * Lombok 1.18
 * Selenide 6.5
 * Selenium 4.1
+* Jib 3.3.2
+* OpenTelemetry 1.28.0
 * etc ...
 
-## Run using Maven command
+## Build an application image 
 
-* Clone this repository
-
-  ```
-  $ git clone https://github.com/kazuki43zoo/mybatis-spring-boot-jpetstore.git
-  ```
-  
-* Run a web application using the spring-boot-plugin
-
-  ```
-  $ cd mybatis-spring-boot-jpetstore.git
-  $ ./mvnw clean spring-boot:run
-  ```
-
-## Run using java command
-
-* Build a jar file
-
+### Add [Jib](https://github.com/GoogleContainerTools/jib)
+In pom.xml, define how to use Jib to build a Docker image
+``` xml
+<plugin>
+    <groupId>com.google.cloud.tools</groupId>
+    <artifactId>jib-maven-plugin</artifactId>
+    <version>${jib-maven-plugin.version}</version>
+    <configuration>
+        <from>
+            <image>gcr.io/distroless/java17-debian12</image>
+            <platforms>
+                <platform>
+                    <architecture>amd64</architecture>
+                    <os>linux</os>
+                </platform>
+            </platforms>
+        </from>
+        <container>
+            <jvmFlags>
+                <jvmFlag>-javaagent:/otelagent/opentelemetry-javaagent.jar</jvmFlag>
+            </jvmFlags>
+        </container>
+        <extraDirectories>
+            <paths>
+                <path>
+                    <from>${project.build.directory}/agent</from>
+                    <into>/otelagent</into>
+                </path>
+            </paths>
+        </extraDirectories>
+    </configuration>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals>
+                <goal>dockerBuild</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+```
+The config of OpenTelemetry agent JAR
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-dependency-plugin</artifactId>
+    <executions>
+        <execution>
+            <id>copy-agent</id>
+            <phase>package</phase>
+            <goals>
+                <goal>copy</goal>
+            </goals>
+            <configuration>
+                <artifactItems>
+                    <artifactItem>
+                        <groupId>io.opentelemetry.javaagent</groupId>
+                        <artifactId>opentelemetry-javaagent</artifactId>
+                        <version>${opentelemetry.version}</version>
+                        <outputDirectory>${project.build.directory}/agent</outputDirectory>
+                        <destFileName>opentelemetry-javaagent.jar</destFileName>
+                    </artifactItem>
+                </artifactItems>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+### Build Image
   ```
   $ ./mvnw clean package -DskipTests=true
   ```
-
-* Run java command
-
+## OpenTelemetry Collector
+[otel-config.yaml](https://github.com/scw0108/jpetstore-otel/blob/master/otel-config.yaml)
+### Receivers
+* otlp
+### Exporters
+* sapm
+``` yaml
+  access_token: # Token
+  access_token_passthrough: true
+  endpoint: # https://ingest.us1.signalfx.com/v2/trace
+  max_connections: 100
+  num_workers: 8
+  log_detailed_response: true
+```
+* signalfx:
+```yaml
+  access_token: # Token
+  realm: us1
+  api_url: # https://api.us1.signalfx.com
+  ingest_url: # https://ingest.us1.signalfx.com
+  sync_host_metadata: true
+```
+### Service
+```yaml
+traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, filter/drop_actuator, resourcedetection]
+      exporters: [sapm]
+```
+```yaml
+metrics:
+      receivers: [otlp, hostmetrics]
+      processors: [memory_limiter, batch, resourcedetection,filter/drop_actuator, resource]
+      exporters: [signalfx]
+```
+### Build image
+ ```
+  $ docker build -t <your image tag> .
   ```
-  $ java -jar target/mybatis-spring-boot-jpetstore-2.0.0-SNAPSHOT.jar
-  ```
-
-## Perform integration test using Maven command
-
-Perform integration tests for screen transition.
-
+### RUM Config
+In order to send data to Splunk Observability Cloud's RUM, each html files need to add these sections.
+``` html
+<script src="https://cdn.signalfx.com/o11y-gdi-rum/v0.18.0/splunk-otel-web.js" crossorigin="anonymous"></script>
+<script>
+    SplunkRum.init({
+        realm: "us1",
+        rumAccessToken: // RUM Token,
+        applicationName: "jpetstore-otel-demo",
+        deploymentEnvironment: "lab",
+        debug: true
+    });
+</script>
 ```
-$ ./mvnw clean test
+Add recode function
+```html
+<script src="https://cdn.signalfx.com/o11y-gdi-rum/v0.18.0/splunk-otel-web-session-recorder.js" crossorigin="anonymous"></script>
+<script>
+    SplunkSessionRecorder.init({
+        app: "jpetstore-otel-demo",
+        realm: "us1",
+        rumAccessToken: // RUM Token
+    });
+</script>
 ```
+## GCP
+### Artifact Registry
+Images are pushed to here
+### Cloud Run
+In [cloud-run.yaml](https://github.com/scw0108/jpetstore-otel/blob/master/cloud-run.yaml), there are two containers
+  1. jpetstore-app
+  2. collector
 
-
-## Run on IDEs (Note)
-
-This sample use the [Lombok](https://projectlombok.org/) to generate setter method, getter method and constructor.
-If this sample application run on your IDE, please install the Lombok. (see [https://projectlombok.org/download.html](https://projectlombok.org/download.html))
-
-And this application use the groovy language to use multiple line string on MyBatis Mapper method.
-If this sample application run on your IDE, please convert to groovy project and add `src/main/groovy` into source path.
-And if you use a STS(or Eclipse), please install the Groovy Eclipse plugin. About how install the Groovy Eclipse, please see as follow:
-
-* https://github.com/groovy/groovy-eclipse/wiki
-
-
-e.g.) multiple line string on MyBatis Mapper method
-
-```groovy
-@Mapper
-@CacheNamespace
-interface CategoryMapper {
-
-    @Select('''
-        SELECT
-            CATID AS categoryId,
-            NAME,
-            DESCN AS description
-        FROM
-            CATEGORY
-        WHERE
-            CATID = #{categoryId}
-    ''')
-    Category getCategory(String categoryId)
-
-}
+Some OTel evironment variable need to define
+```yaml
+- name: OTEL_EXPORTER_OTLP_ENDPOINT
+  value: "http://0.0.0.0:4317"
+- name: OTEL_SERVICE_NAME
+  value: "jpetstore-otel-demo"
+- name: OTEL_TRACES_SAMPLER
+  value: "always_on"
+- name: OTEL_METRICS_EXPORTER
+  value: "otlp"           
 ```
+https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/
 
-## Access to the index page
-
-[http://localhost:8080/](http://localhost:8080/)
-
-![Index Screen](images/screen-index.png)
-
-![Catalog Screen](images/screen-catalog.png)
-
+Deploy on Cloud Run
+```
+$ gcloud run services replace cloud-run.yaml
+```
 
 ## Default active accounts (ID/PASSWORD)
 
 * j2ee/tBp5DvBR
 * ACID/ACID
 
-## Data Store
+## Splunk APM
 
-In this application, application data stored in filesystem files.
-
-```
-$HOME
-  └── db
-      + jpetstore.script
-      + jpetstore.properties
-```
-
-## Project Structure
-
-Project structure of this sample application is as follow:
-
-```
-.
-└── src
-    └── main
-        ├── groovy
-        │   └── com
-        │       └── kazuki43zoo
-        │           └── jpetstore
-        │               └── mapper         // Store mapper interfaces
-        ├── java
-        │   └── com
-        │       └── kazuki43zoo
-        │           └── jpetstore
-        │               ├── component      // Store general component classes
-        │               │   ├── event
-        │               │   ├── exception
-        │               │   ├── message
-        │               │   └── validation
-        │               ├── config         // Store configuration classes
-        │               ├── domain         // Store domain objects
-        │               ├── service        // Store service classes
-        │               └── ui             // Store classes that depends user interface
-        │                   └── controller // Store controller classes
-        └── resources
-            ├── db                         // Store sql files for Flyway
-            │   └── migration
-            ├── static                     // Store static web resource files
-            │   ├── css
-            │   └── images
-            └── templates                  // Store view template files for Thymeleaf
-                ├── account
-                ├── auth
-                ├── cart
-                ├── catalog
-                ├── error
-                └── order
-```
+## Splunk RUM
