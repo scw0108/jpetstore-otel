@@ -1,6 +1,6 @@
 <!--
 
-       Copyright 2016-2017 the original author or authors.
+       Copyright 2016-2024 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
     <title>JPetStore Demo</title>
     <link rel="StyleSheet" th:href="@{/css/jpetstore.css}" type="text/css" media="screen" />
 </head>
-
+<script src="https://cdn.signalfx.com/o11y-gdi-rum/v0.18.0/splunk-otel-web.js" crossorigin="anonymous"></script>
 <body th:with="isErrorResponse=${#request.getAttribute('javax.servlet.error.status_code') ge 400}">
 
 <div id="Header">

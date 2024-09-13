@@ -1,3 +1,19 @@
+#
+#    Copyright 2016-2024 the original author or authors.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
+
 receivers:
   otlp:
     protocols:
@@ -10,6 +26,8 @@ receivers:
     scrapers:
       cpu:
       memory:
+      load:
+      network:
 
 
 exporters:
@@ -17,16 +35,17 @@ exporters:
     log:
       default_log_name: opentelemetry.io/collector-exported-log
   sapm:
-    access_token: 
+    access_token: # Token
     access_token_passthrough: true
-    endpoint: https://ingest.us1.signalfx.com/v2/trace
+    endpoint: # https://ingest.us1.signalfx.com/v2/trace
     max_connections: 100
     num_workers: 8
+    log_detailed_response: true
   signalfx:
-    access_token: 
+    access_token: # Token
     realm: us1
-    api_url: https://api.us1.signalfx.com
-    ingest_url: https://ingest.us1.signalfx.com
+    api_url: # https://api.us1.signalfx.com
+    ingest_url: # https://ingest.us1.signalfx.com
     sync_host_metadata: true
 
 extensions:
@@ -69,8 +88,4 @@ service:
     metrics:
       receivers: [otlp, hostmetrics]
       processors: [memory_limiter, batch, resourcedetection,filter/drop_actuator, resource]
-      exporters: [signalfx]
-    logs:
-      receivers: [otlp]
-      processors: [memory_limiter, batch, resourcedetection]
       exporters: [signalfx]

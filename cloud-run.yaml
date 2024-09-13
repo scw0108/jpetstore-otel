@@ -1,7 +1,23 @@
+#
+#    Copyright 2016-2024 the original author or authors.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
+
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: jpetstore-otel-test
+  name: jpetstore-otel-splunk-demo
   annotations:
     run.googleapis.com/ingress: all
     run.googleapis.com/ingress-status: all
@@ -20,13 +36,14 @@ spec:
     spec:
       containerConcurrency: 100
       timeoutSeconds: 300
-      # serviceAccountName: opentelemetry-demo@das-ct-lab.iam.gserviceaccount.com
       containers:
         - name: jpetstore-app
-          image: asia-east1-docker.pkg.dev/das-ct-lab/test-otel/jpetstore
+          image: # JPetstore Image
           ports:
             - containerPort: 8080
           env:
+            # - name: SPLUNK_TRACE_RESPONSE_HEADER_ENABLED
+            #   value: "true"
             - name: spring.profiles.active
               value: test,gcp
             - name: logging.level.com.example.otel
@@ -34,14 +51,12 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: -Djava.security.egd=file:/dev/./urandom -Dfile.encoding=UTF-8
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://localhost:4317"
+              value: "http://0.0.0.0:4317"
             - name: OTEL_SERVICE_NAME
               value: "jpetstore-otel-demo"
             - name: OTEL_TRACES_SAMPLER
               value: "always_on"
             - name: OTEL_METRICS_EXPORTER
-              value: "otlp"
-            - name: OTEL_LOGS_EXPORTER
               value: "otlp"
             - name: OTEL_RESOURCE_ATTRIBUTES
               value: "deployment.environment=lab,service.name=jpetstore-otel-test"
@@ -66,7 +81,7 @@ spec:
             failureThreshold: 10
             timeoutSeconds: 1
         - name: otel-collector
-          image: asia-east1-docker.pkg.dev/das-ct-lab/test-otel/collector:0.0.3
+          image: # Collector Image
           resources:
             limits:
               cpu: 500m

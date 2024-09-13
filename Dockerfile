@@ -14,13 +14,6 @@
 #    limitations under the License.
 #
 
-# Build the first image
-FROM eclipse-temurin:17-jre AS app-image
-ADD target/mybatis-spring-boot-jpetstore-2.0.0-SNAPSHOT.jar /app.jar
-ADD opentelemetry-javaagent.jar /opentelemetry-javaagent.jar
-ENTRYPOINT ["java", "-javaagent:/opentelemetry-javaagent.jar", "-jar", "/app.jar"]
-
-# Build the second image
-FROM otel/opentelemetry-collector-contrib:latest AS otel-image
+FROM otel/opentelemetry-collector-contrib:latest
 WORKDIR /etc/otelcol-contrib
 COPY otel-config.yaml /etc/otelcol-contrib/config.yaml

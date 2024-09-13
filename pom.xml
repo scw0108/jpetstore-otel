@@ -162,7 +162,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<executable>true</executable>
-					<finalName>petclinic</finalName>
+					<finalName>jpetstore</finalName>
 				</configuration>
 			</plugin>
 			<plugin>

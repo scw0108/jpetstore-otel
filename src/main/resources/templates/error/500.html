@@ -1,6 +1,6 @@
 <!--
 
-       Copyright 2016-2017 the original author or authors.
+       Copyright 2016-2024 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -19,6 +19,26 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
+      <head>
+        <script src="https://cdn.signalfx.com/o11y-gdi-rum/v0.18.0/splunk-otel-web.js" crossorigin="anonymous"></script>
+        <script>
+            SplunkRum.init({
+                realm: "us1",
+                rumAccessToken: // RUM Token,
+                applicationName: "jpetstore-otel-demo",
+                deploymentEnvironment: "lab",
+                debug: true
+            });
+        </script>
+        <script src="https://cdn.signalfx.com/o11y-gdi-rum/v0.18.0/splunk-otel-web-session-recorder.js" crossorigin="anonymous"></script>
+        <script>
+            SplunkSessionRecorder.init({
+                app: "jpetstore-otel-demo",
+                realm: "us1",
+                rumAccessToken: // RUM Token
+            });
+        </script>
+    </head>
 <body>
 <div id="Content">
     <section layout:fragment="content">

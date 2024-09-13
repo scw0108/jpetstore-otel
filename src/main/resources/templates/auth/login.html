@@ -20,6 +20,26 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
+      <head>
+        <script src="https://cdn.signalfx.com/o11y-gdi-rum/v0.18.0/splunk-otel-web.js" crossorigin="anonymous"></script>
+        <script>
+            SplunkRum.init({
+                realm: "us1",
+                rumAccessToken: // RUM Token,
+                applicationName: "jpetstore-otel-demo",
+                deploymentEnvironment: "lab",
+                debug: true
+            });
+        </script>
+        <script src="https://cdn.signalfx.com/o11y-gdi-rum/v0.18.0/splunk-otel-web-session-recorder.js" crossorigin="anonymous"></script>
+        <script>
+            SplunkSessionRecorder.init({
+                app: "jpetstore-otel-demo",
+                realm: "us1",
+                rumAccessToken: // RUM Token
+            });
+        </script>
+    </head>
 <body>
 <div id="Content">
     <section layout:fragment="content">
