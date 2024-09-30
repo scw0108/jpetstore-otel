@@ -38,28 +38,24 @@ spec:
       timeoutSeconds: 300
       containers:
         - name: jpetstore-app
-          image: # JPetstore Image
+          image: asia-east1-docker.pkg.dev/das-ct-lab/test-otel/jpetstore:2.0.0
           ports:
             - containerPort: 8080
           env:
-            # - name: SPLUNK_TRACE_RESPONSE_HEADER_ENABLED
-            #   value: "true"
+            - name: SPLUNK_TRACE_RESPONSE_HEADER_ENABLED
+              value: "true"
             - name: spring.profiles.active
               value: test,gcp
-            - name: logging.level.com.example.otel
-              value: debug
             - name: JAVA_TOOL_OPTIONS
               value: -Djava.security.egd=file:/dev/./urandom -Dfile.encoding=UTF-8
+            - name: OTEL_SERVICE_NAME
+              value: "jpetstore-otel-test"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://0.0.0.0:4317"
+              value: "http://localhost:4318"
             - name: OTEL_SERVICE_NAME
               value: "jpetstore-otel-demo"
-            - name: OTEL_TRACES_SAMPLER
-              value: "always_on"
-            - name: OTEL_METRICS_EXPORTER
-              value: "otlp"
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "deployment.environment=lab,service.name=jpetstore-otel-test"
+              value: "deployment.environment=lab,service.version=0.0.0"
           resources:
             limits:
               cpu: 1000m
@@ -81,7 +77,7 @@ spec:
             failureThreshold: 10
             timeoutSeconds: 1
         - name: otel-collector
-          image: # Collector Image
+          image: asia-east1-docker.pkg.dev/das-ct-lab/test-otel/collector:2.0.0
           resources:
             limits:
               cpu: 500m

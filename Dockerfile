@@ -14,6 +14,20 @@
 #    limitations under the License.
 #
 
-FROM otel/opentelemetry-collector-contrib:latest
-WORKDIR /etc/otelcol-contrib
-COPY otel-config.yaml /etc/otelcol-contrib/config.yaml
+# Docker Image for Splunk OTel Collector
+FROM quay.io/signalfx/splunk-otel-collector:latest
+
+# ENV SPLUNK_ACCESS_TOKEN= ACCESS Token 
+ENV SPLUNK_REALM=us1
+
+EXPOSE 13133 14250 14268 4317 4318 6060 7276 8888 9080 9411 9943
+
+CMD ["splunk-otel-collector"]
+
+# Docker Image for jpetstore
+# FROM eclipse-temurin:17-jre
+
+# ADD target/mybatis-spring-boot-jpetstore-2.0.0-SNAPSHOT.jar /app.jar
+# ADD ./splunk-otel-javaagent.jar /splunk-otel-javaagent.jar
+
+# ENTRYPOINT java -javaagent:splunk-otel-javaagent.jar -jar app.jar

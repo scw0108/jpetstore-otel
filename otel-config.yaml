@@ -21,31 +21,23 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
-  hostmetrics:
-    collection_interval: 20s
-    scrapers:
-      cpu:
-      memory:
-      load:
-      network:
-
 
 exporters:
   googlecloud:
     log:
       default_log_name: opentelemetry.io/collector-exported-log
   sapm:
-    access_token: # Token
+    access_token: 4WPhtH_05SxEfurRUlKZ9w
     access_token_passthrough: true
-    endpoint: # https://ingest.us1.signalfx.com/v2/trace
+    endpoint: https://ingest.us1.signalfx.com/v2/trace
     max_connections: 100
     num_workers: 8
     log_detailed_response: true
   signalfx:
-    access_token: # Token
+    access_token: 4WPhtH_05SxEfurRUlKZ9w
     realm: us1
-    api_url: # https://api.us1.signalfx.com
-    ingest_url: # https://ingest.us1.signalfx.com
+    api_url: https://api.us1.signalfx.com
+    ingest_url: https://ingest.us1.signalfx.com
     sync_host_metadata: true
 
 extensions:
