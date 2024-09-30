@@ -1,8 +1,8 @@
 # jpetstore-otel
 
-This application is a web application modified by [JPetStore](https://github.com/kazuki43zoo/mybatis-spring-boot-jpetstore) Spring Boot version to demenstorate [OpenTelemetry](https://opentelemetry.io/docs/). 
-The application is deployed on GCP Cloud Run.
-There is a OpenTelemetry Collector that collects telemetry data and sends to [Splunk Observability Cloud](https://www.splunk.com/en_us/products/observability-cloud.html) for monitoring.
+This application is a web application modified by [JPetStore](https://github.com/kazuki43zoo/mybatis-spring-boot-jpetstore) Spring Boot version to demonstrate [OpenTelemetry](https://opentelemetry.io/docs/). 
+
+The application is deployed on GCP Cloud Run, where it includes an OpenTelemetry Collector that collects telemetry data and sends it to [Splunk Observability Cloud](https://www.splunk.com/en_us/products/observability-cloud.html) for monitoring. Additionally, it utilizes Splunk RUM (Real User Monitoring) and APM (Application Performance Monitoring) to enhance visibility into user interactions and application performance.
 
 We will walk through this sample to understand how is it built and learn how to run it.
 
@@ -23,148 +23,123 @@ We will walk through this sample to understand how is it built and learn how to 
 * Lombok 1.18
 * Selenide 6.5
 * Selenium 4.1
-* Jib 3.3.2
 * OpenTelemetry 1.28.0
 * etc ...
 
 ## Build an application image 
-
-### Add [Jib](https://github.com/GoogleContainerTools/jib)
-In pom.xml, define how to use Jib to build a Docker image
-``` xml
-<plugin>
-    <groupId>com.google.cloud.tools</groupId>
-    <artifactId>jib-maven-plugin</artifactId>
-    <version>${jib-maven-plugin.version}</version>
-    <configuration>
-        <from>
-            <image>gcr.io/distroless/java17-debian12</image>
-            <platforms>
-                <platform>
-                    <architecture>amd64</architecture>
-                    <os>linux</os>
-                </platform>
-            </platforms>
-        </from>
-        <container>
-            <jvmFlags>
-                <jvmFlag>-javaagent:/otelagent/opentelemetry-javaagent.jar</jvmFlag>
-            </jvmFlags>
-        </container>
-        <extraDirectories>
-            <paths>
-                <path>
-                    <from>${project.build.directory}/agent</from>
-                    <into>/otelagent</into>
-                </path>
-            </paths>
-        </extraDirectories>
-    </configuration>
-    <executions>
-        <execution>
-            <phase>package</phase>
-            <goals>
-                <goal>dockerBuild</goal>
-            </goals>
-        </execution>
-    </executions>
-</plugin>
-```
-The config of OpenTelemetry agent JAR
-```xml
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-dependency-plugin</artifactId>
-    <executions>
-        <execution>
-            <id>copy-agent</id>
-            <phase>package</phase>
-            <goals>
-                <goal>copy</goal>
-            </goals>
-            <configuration>
-                <artifactItems>
-                    <artifactItem>
-                        <groupId>io.opentelemetry.javaagent</groupId>
-                        <artifactId>opentelemetry-javaagent</artifactId>
-                        <version>${opentelemetry.version}</version>
-                        <outputDirectory>${project.build.directory}/agent</outputDirectory>
-                        <destFileName>opentelemetry-javaagent.jar</destFileName>
-                    </artifactItem>
-                </artifactItems>
-            </configuration>
-        </execution>
-    </executions>
-</plugin>
-```
-### Build Image
-  ```
-  $ ./mvnw clean package -DskipTests=true
-  ```
-## OpenTelemetry Collector
-[otel-config.yaml](https://github.com/scw0108/jpetstore-otel/blob/master/otel-config.yaml)
-### Receivers
-* otlp
-### Exporters
-* sapm
-``` yaml
-  access_token: # Token
-  access_token_passthrough: true
-  endpoint: # https://ingest.us1.signalfx.com/v2/trace
-  max_connections: 100
-  num_workers: 8
-  log_detailed_response: true
-```
-* signalfx:
-```yaml
-  access_token: # Token
-  realm: us1
-  api_url: # https://api.us1.signalfx.com
-  ingest_url: # https://ingest.us1.signalfx.com
-  sync_host_metadata: true
-```
-### Service
-```yaml
-traces:
-      receivers: [otlp]
-      processors: [memory_limiter, batch, filter/drop_actuator, resourcedetection]
-      exporters: [sapm]
-```
-```yaml
-metrics:
-      receivers: [otlp, hostmetrics]
-      processors: [memory_limiter, batch, resourcedetection,filter/drop_actuator, resource]
-      exporters: [signalfx]
-```
-### Build image
- ```
-  $ docker build -t <your image tag> .
-  ```
 ### RUM Config
-In order to send data to Splunk Observability Cloud's RUM, each html files need to add these sections.
+To send data to Splunk Observability Cloud's Real User Monitoring (RUM), each HTML file needs to include the following sections:
+#### Initialize the Splunk RUM Library:
 ``` html
 <script src="https://cdn.signalfx.com/o11y-gdi-rum/v0.18.0/splunk-otel-web.js" crossorigin="anonymous"></script>
 <script>
     SplunkRum.init({
         realm: "us1",
-        rumAccessToken: // RUM Token,
+        rumAccessToken: "<Your RUM Token>",
         applicationName: "jpetstore-otel-demo",
         deploymentEnvironment: "lab",
         debug: true
     });
 </script>
 ```
-Add recode function
+#### Add Session Recording Functionality:
 ```html
 <script src="https://cdn.signalfx.com/o11y-gdi-rum/v0.18.0/splunk-otel-web-session-recorder.js" crossorigin="anonymous"></script>
 <script>
     SplunkSessionRecorder.init({
         app: "jpetstore-otel-demo",
         realm: "us1",
-        rumAccessToken: // RUM Token
+        rumAccessToken: "<Your RUM Token>"
     });
 </script>
 ```
+### Create Jar File
+```
+$ ./mvnw clean package -DskipTests=true
+```
+### Build Docker Image
+This section outlines how to build the Docker image using a Java agent for monitoring.
+#### Download Splunk Agent Jar
+[splunk-otel-javaagent.jar](https://github.com/signalfx/splunk-otel-java/releases/tag/v2.7.0)
+#### Dockerfile
+```
+FROM eclipse-temurin:17-jre
+
+# Add the Spring Boot application JAR to the container
+ADD target/mybatis-spring-boot-jpetstore-2.0.0-SNAPSHOT.jar /app.jar
+
+# Add the Splunk OpenTelemetry Java agent JAR to the container
+ADD ./splunk-otel-javaagent.jar /splunk-otel-javaagent.jar
+
+# Set the entry point for the container, including the Java agent for monitoring
+ENTRYPOINT ["java", "-javaagent:splunk-otel-javaagent.jar", "-jar", "/app.jar"]
+```
+
+## OpenTelemetry Collector
+### First Version
+In this version, I manually configure the collector. You can find the configuration details in the [otel-config.yaml](https://github.com/scw0108/jpetstore-otel/blob/master/otel-config.yaml)
+#### Receivers
+* otlp
+#### Exporters
+* sapm
+``` yaml
+access_token: # Token
+access_token_passthrough: true
+endpoint: # https://ingest.us1.signalfx.com/v2/trace
+max_connections: 100
+num_workers: 8
+log_detailed_response: true
+```
+* signalfx:
+```yaml
+access_token: # Token
+realm: us1
+api_url: # https://api.us1.signalfx.com
+ingest_url: # https://ingest.us1.signalfx.com
+sync_host_metadata: true
+```
+#### Service
+```yaml
+traces:
+    receivers: [otlp]
+    processors: [memory_limiter, batch, filter/drop_actuator, resourcedetection]
+    exporters: [sapm]
+```
+```yaml
+metrics:
+    receivers: [otlp, hostmetrics]
+    processors: [memory_limiter, batch, resourcedetection,filter/drop_actuator, resource]
+    exporters: [signalfx]
+```
+#### Build image
+```
+FROM otel/opentelemetry-collector-contrib:latest
+
+# Set the working directory for the OpenTelemetry Collector
+WORKDIR /etc/otelcol-contrib
+
+# Copy the OpenTelemetry configuration file into the container
+COPY otel-config.yaml /etc/otelcol-contrib/config.yaml
+```
+#### Result
+However, I was unable to send Server Time to Splunk Observability Cloud to connect RUM and APM, so I switched to using Second Version.
+
+### Second Version
+#### Use Splunk OTel Collector
+In this setup, we utilize the Splunk OpenTelemetry Collector, which allows us to save time by simplifying the collector configuration process. Furthermore, this approach helps decrease the likelihood of encountering configuration-related bugs.
+```
+FROM quay.io/signalfx/splunk-otel-collector:latest
+
+# Set the Splunk access token (replace with your actual access token)
+# ENV SPLUNK_ACCESS_TOKEN=<Your Access Token>
+
+# Specify the Splunk realm for data ingestion
+ENV SPLUNK_REALM=us1
+
+# Expose necessary ports for the Splunk OpenTelemetry Collector
+EXPOSE 13133 14250 14268 4317 4318 6060 7276 8888 9080 9411 9943
+```
+
 ## GCP
 ### Artifact Registry
 Images are pushed to here
