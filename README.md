@@ -8,7 +8,7 @@ We will walk through this sample to understand how is it built and learn how to 
 
 ## Requirements
 
-* Java 8+ (JDK 1.8+)
+* Java 11+
 
 ## Stacks
 
@@ -58,7 +58,7 @@ To send data to Splunk Observability Cloud's Real User Monitoring (RUM), each HT
 $ ./mvnw clean package -DskipTests=true
 ```
 ### Build Docker Image
-This section outlines how to build the Docker image using a Java agent for monitoring.
+This section outlines how to build the Docker image using a Java agent for sending telemetry data.
 #### Download Splunk Agent Jar
 [splunk-otel-javaagent.jar](https://github.com/signalfx/splunk-otel-java/releases/tag/v2.7.0)
 #### Dockerfile
@@ -71,7 +71,7 @@ ADD target/mybatis-spring-boot-jpetstore-2.0.0-SNAPSHOT.jar /app.jar
 # Add the Splunk OpenTelemetry Java agent JAR to the container
 ADD ./splunk-otel-javaagent.jar /splunk-otel-javaagent.jar
 
-# Set the entry point for the container, including the Java agent for monitoring
+# Set the entry point for the container, including the Java agent for sending data
 ENTRYPOINT ["java", "-javaagent:splunk-otel-javaagent.jar", "-jar", "/app.jar"]
 ```
 
