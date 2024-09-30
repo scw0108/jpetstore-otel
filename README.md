@@ -149,7 +149,7 @@ In [cloud-run.yaml](https://github.com/scw0108/jpetstore-otel/blob/master/cloud-
   1. **jpetstore-app**
   2. **collector**
 
-**Some OTel evironment variable need to define**
+#### Some OTel evironment variable need to define
 ```yaml
 - name: SPLUNK_TRACE_RESPONSE_HEADER_ENABLED
   value: "true"
@@ -166,9 +166,10 @@ In [cloud-run.yaml](https://github.com/scw0108/jpetstore-otel/blob/master/cloud-
 - name: OTEL_RESOURCE_ATTRIBUTES
   value: "deployment.environment=lab,service.version=0.0.0"       
 ```
-https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/
+For more information on OpenTelemetry environment variables, you can refer to the [OpenTelemetry documentation](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/) and [Splunk Configuration](https://docs.splunk.com/observability/en/gdi/get-data-in/application/java/configuration/advanced-java-otel-configuration.html).
 
-Deploy on Cloud Run
+#### Deploy on Cloud Run
+To deploy the service on Cloud Run, use the following command:
 ```
 $ gcloud run services replace cloud-run.yaml
 ```
