@@ -62,7 +62,7 @@ This section outlines how to build the Docker image using a Java agent for sendi
 #### Download Splunk Agent Jar
 [splunk-otel-javaagent.jar](https://github.com/signalfx/splunk-otel-java/releases/tag/v2.7.0)
 #### Dockerfile
-```
+```dockerfile
 FROM eclipse-temurin:17-jre
 
 # Add the Spring Boot application JAR to the container
@@ -112,7 +112,7 @@ metrics:
     exporters: [signalfx]
 ```
 #### Build image
-```
+```dockerfile
 FROM otel/opentelemetry-collector-contrib:latest
 
 # Set the working directory for the OpenTelemetry Collector
@@ -127,7 +127,8 @@ However, I was unable to send Server Time to Splunk Observability Cloud to conne
 ### Second Version
 #### Use Splunk OTel Collector
 In this setup, we utilize the Splunk OpenTelemetry Collector, which allows us to save time by simplifying the collector configuration process. Furthermore, this approach helps decrease the likelihood of encountering configuration-related bugs.
-```
+
+```dockerfile
 FROM quay.io/signalfx/splunk-otel-collector:latest
 
 # Set the Splunk access token (replace with your actual access token)
@@ -142,22 +143,28 @@ EXPOSE 13133 14250 14268 4317 4318 6060 7276 8888 9080 9411 9943
 
 ## GCP
 ### Artifact Registry
-Images are pushed to here
+This is where images are pushed.
 ### Cloud Run
 In [cloud-run.yaml](https://github.com/scw0108/jpetstore-otel/blob/master/cloud-run.yaml), there are two containers
-  1. jpetstore-app
-  2. collector
+  1. **jpetstore-app**
+  2. **collector**
 
-Some OTel evironment variable need to define
+**Some OTel evironment variable need to define**
 ```yaml
+- name: SPLUNK_TRACE_RESPONSE_HEADER_ENABLED
+  value: "true"
+- name: spring.profiles.active
+  value: test,gcp
+- name: JAVA_TOOL_OPTIONS
+  value: -Djava.security.egd=file:/dev/./urandom -Dfile.encoding=UTF-8
+- name: OTEL_SERVICE_NAME
+  value: "jpetstore-otel-test"
 - name: OTEL_EXPORTER_OTLP_ENDPOINT
-  value: "http://0.0.0.0:4317"
+  value: "http://localhost:4318"
 - name: OTEL_SERVICE_NAME
   value: "jpetstore-otel-demo"
-- name: OTEL_TRACES_SAMPLER
-  value: "always_on"
-- name: OTEL_METRICS_EXPORTER
-  value: "otlp"           
+- name: OTEL_RESOURCE_ATTRIBUTES
+  value: "deployment.environment=lab,service.version=0.0.0"       
 ```
 https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/
 
