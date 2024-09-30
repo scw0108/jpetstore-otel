@@ -9,6 +9,8 @@ We will walk through this sample to understand how is it built and learn how to 
 ## Requirements
 
 * Java 11+
+* Splunk Observability Cloud
+* GCP
 
 ## Stacks
 
@@ -190,4 +192,13 @@ $ gcloud run services replace cloud-run.yaml
     <img width="1036" alt="Trace Information" src="https://github.com/user-attachments/assets/4cb13791-2436-464c-9bbd-c2fbdd7c4591">
 
 ## Splunk RUM
-* 
+* **RUM Dashboard**
+  <img width="1434" alt="RUM dashboard" src="https://github.com/user-attachments/assets/1c321b91-72e0-4b1b-96c8-6c757126dcaf">
+* **Complete Information**
+  <img width="1431" alt="more info" src="https://github.com/user-attachments/assets/253ea779-9251-46e8-8fdd-4731a62530e5">
+* **Record Function**
+  <img width="1320" alt="Record" src="https://github.com/user-attachments/assets/c831f281-2570-434d-8978-cb715306e3ed">
+* **RUM connect to APM**
+  <img width="1321" alt="RUM to APM" src="https://github.com/user-attachments/assets/6c411c8b-8b1c-42f2-9bfa-ae1ca09f87bc">
+
+
